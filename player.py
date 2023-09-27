@@ -1,49 +1,54 @@
 import pygame
 
 class Player(pygame.sprite.Sprite):
+    GRAVITY = 0.5  # Adjust this value to change the strength of gravity
+
     def __init__(self):
         super().__init__()
-        self.image = pygame.Surface((32, 32))  # Replace with player sprite
-        self.image.fill((255, 0, 0))  # Replace with player sprite
+        self.image = pygame.Surface([50, 50])
+        self.image.fill((0, 128, 255))
         self.rect = self.image.get_rect()
-        self.rect.center = (100, 100)  # Initial spawn point
+        self.rect.x = 100
+        self.rect.y = 100
+        self.change_x = 0  # Velocity in the x direction
+        self.change_y = 0  # Velocity in the y direction
+        self.on_ground = False  # To check if the player is on a platform
 
-        # Player attributes
-        self.speed = 5  # Movement speed
-        self.jump_power = -10  # Jump strength
-        self.gravity = 0.5  # Gravity value
-        self.is_jumping = False
-        self.is_running = False
-        self.y_velocity = 0  # Vertical velocity
+    def move_left(self):
+        """Set the player's velocity to move left."""
+        self.change_x = -5
 
-    def update(self):
-        # Handle player movement
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_a] or keys[pygame.K_LEFT]:
-            self.rect.x -= self.speed
-        if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
-            self.rect.x += self.speed
+    def move_right(self):
+        """Set the player's velocity to move right."""
+        self.change_x = 5
 
-        # Handle jumping
-        if keys[pygame.K_SPACE] and not self.is_jumping:
-            self.is_jumping = True
-            self.y_velocity = self.jump_power
-        else:
-            self.y_velocity += self.gravity
+    def stop(self):
+        """Stop the player's horizontal movement."""
+        self.change_x = 0
 
-        # Update player's vertical position
-        self.rect.y += self.y_velocity
+    def update(self, platforms):
+        """Update the player's position based on velocity and check for collisions."""
+        # Apply gravity
+        self.change_y += self.GRAVITY
+        self.rect.y += self.change_y
 
-        # Ground collision (adjust based on your ground level)
-        if self.rect.y > 400:  # Replace with your ground level
-            self.rect.y = 400
-            self.is_jumping = False
-            self.y_velocity = 0
+        # Check for collisions with platforms
+        self.on_ground = False
+        hit_list = pygame.sprite.spritecollide(self, platforms, False)
+        for platform in hit_list:
+            if self.change_y > 0:
+                self.rect.bottom = platform.rect.top
+                self.on_ground = True
+                self.change_y = 0
 
-        # Handle running
-        if keys[pygame.K_LSHIFT]:
-            self.is_running = True
-            self.speed = 10  # Adjust the running speed
-        else:
-            self.is_running = False
-            self.speed = 5  # Reset to normal speed
+        self.rect.x += self.change_x
+        hit_list = pygame.sprite.spritecollide(self, platforms, False)
+        for platform in hit_list:
+            if self.change_x > 0:
+                self.rect.right = platform.rect.left
+            elif self.change_x < 0:
+                self.rect.left = platform.rect.right
+
+    def draw(self, screen, camera):
+        """Draw the player on the screen, adjusted for the camera's position."""
+        screen.blit(self.image, camera.apply(self))
