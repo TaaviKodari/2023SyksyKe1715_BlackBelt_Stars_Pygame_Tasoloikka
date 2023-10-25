@@ -1,18 +1,20 @@
 import pygame
 
 class Player(pygame.sprite.Sprite):
-    GRAVITY = 0.5  # Adjust this value to change the strength of gravity
+    GRAVITY = 0  # Adjust this value to change the strength of gravity
 
-    def __init__(self):
+    def __init__(self, pos, frames):
         super().__init__()
-        self.image = pygame.Surface([50, 50])
-        self.image.fill((0, 128, 255))
-        self.rect = self.image.get_rect()
-        self.rect.x = 100
-        self.rect.y = 100
+        self.frames = frames
+        self.current_frame = 0
+        self.image = self.frames[self.current_frame]
+        self.rect = self.image.get_rect(center=pos)
         self.change_x = 0  # Velocity in the x direction
         self.change_y = 0  # Velocity in the y direction
         self.on_ground = False  # To check if the player is on a platform
+        #self.platforms = platforms  # Platforms for collision checking
+        self.animation_time = 0.1  # Time (in seconds) for each frame
+        self.current_time = 0
 
     def move_left(self):
         """Set the player's velocity to move left."""
@@ -26,7 +28,7 @@ class Player(pygame.sprite.Sprite):
         """Stop the player's horizontal movement."""
         self.change_x = 0
 
-    def update(self, platforms):
+    def update(self, dt):
         """Update the player's position based on velocity and check for collisions."""
         # Apply gravity
         self.change_y += self.GRAVITY
@@ -34,21 +36,24 @@ class Player(pygame.sprite.Sprite):
 
         # Check for collisions with platforms
         self.on_ground = False
-        hit_list = pygame.sprite.spritecollide(self, platforms, False)
-        for platform in hit_list:
-            if self.change_y > 0:
-                self.rect.bottom = platform.rect.top
-                self.on_ground = True
-                self.change_y = 0
+        #hit_list = pygame.sprite.spritecollide(self, self.platforms, False)
+        #for platform in hit_list:
+         #   if self.change_y > 0:
+          #      self.rect.bottom = platform.rect.top
+           #     self.on_ground = True
+            #    self.change_y = 0
 
         self.rect.x += self.change_x
-        hit_list = pygame.sprite.spritecollide(self, platforms, False)
-        for platform in hit_list:
-            if self.change_x > 0:
-                self.rect.right = platform.rect.left
-            elif self.change_x < 0:
-                self.rect.left = platform.rect.right
+        #hit_list = pygame.sprite.spritecollide(self, self.platforms, False)
+        #for platform in hit_list:
+         #   if self.change_x > 0:
+          #      self.rect.right = platform.rect.left
+           # elif self.change_x < 0:
+            #    self.rect.left = platform.rect.right
 
-    def draw(self, screen, camera):
-        """Draw the player on the screen, adjusted for the camera's position."""
-        screen.blit(self.image, camera.apply(self))
+        # Animation logic
+        self.current_time += dt
+        if self.current_time >= self.animation_time:
+            self.current_time = 0
+            self.current_frame = (self.current_frame + 1) % len(self.frames)
+            self.image = self.frames[self.current_frame]
